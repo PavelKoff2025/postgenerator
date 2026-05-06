@@ -1,48 +1,41 @@
 import os
 import base64
-import requests
 import time
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
 import io
-import io
 
 def generate_image(prompt: str) -> str:
-    """Generate image using ProxyAPI.ru or fallback to PIL"""
-    # Try ProxyAPI.ru (OpenAI-compatible endpoint)
+    """Generate image using ProxyAPI.ru via OpenAI SDK or fallback to PIL"""
+    # Try ProxyAPI.ru (OpenAI-compatible) using OpenAI SDK
     api_key = os.getenv("PROXYAPI_KEY")
-    api_url = os.getenv("PROXYAPI_URL", "https://api.proxyapi.ru/openai/v1/images/generations")
     
     if api_key:
         try:
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
-            }
-            payload = {
-                "model": "gpt-image-2",
-                "prompt": prompt[:500],
-                "n": 1,
-                "size": "1024x1024"
-            }
+            from openai import OpenAI
+            client = OpenAI(
+                api_key=api_key,
+                base_url="https://api.proxyapi.ru/openai/v1"
+            )
             
-            resp = requests.post(api_url, json=payload, headers=headers, timeout=60)
-            resp.raise_for_status()
-            data = resp.json()
+            response = client.images.generate(
+                model="gpt-image-2",
+                prompt=prompt[:500],
+                n=1,
+                size="1024x1024"
+            )
             
-            # Extract image from OpenAI format
             image_data = None
-            if "data" in data and len(data["data"]) > 0:
-                img_info = data["data"][0]
-                if "b64_json" in img_info:
-                    image_data = base64.b64decode(img_info["b64_json"])
-                elif "url" in img_info:
-                    img_resp = requests.get(img_info["url"], timeout=30)
+            if response.data and len(response.data) > 0:
+                if response.data[0].b64_json:
+                    image_data = base64.b64decode(response.data[0].b64_json)
+                elif response.data[0].url:
+                    img_resp = requests.get(response.data[0].url, timeout=30)
                     img_resp.raise_for_status()
                     image_data = img_resp.content
             
             if image_data:
-                # Save image to static/generated
+                # Save image
                 temp_dir = os.path.join(os.path.dirname(__file__), "..", "static", "generated")
                 os.makedirs(temp_dir, exist_ok=True)
                 timestamp = int(time.time())
@@ -52,8 +45,7 @@ def generate_image(prompt: str) -> str:
                     f.write(image_data)
                 
                 return f"/static/generated/image_{timestamp}.jpg"
-            else:
-                print("No image data in API response")
+                
         except Exception as e:
             print(f"ProxyAPI error: {e}")
     
