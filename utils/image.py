@@ -1,41 +1,47 @@
 import os
 import time
 import requests
+import base64
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
 import io
 
 def generate_image(prompt: str) -> str:
-    """Generate image using Stability AI or fallback to PIL"""
-    # Try Stability AI API (free tier available)
-    stability_key = os.getenv("STABILITY_API_KEY")
+    """Generate image using ProxyAPI.ru or fallback to PIL"""
+    # Try ProxyAPI.ru first
+    api_key = os.getenv("PROXYAPI_KEY")
+    api_url = os.getenv("PROXYAPI_URL", "https://api.proxyapi.ru/v1/images/generations")
     
-    if stability_key:
+    if api_key:
         try:
-            api_url = "https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image"
             headers = {
-                "Authorization": f"Bearer {stability_key}",
-                "Content-Type": "application/json",
-                "Accept": "application/json"
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
             }
+            # ProxyAPI supports multiple models, using Stable Diffusion XL
             payload = {
-                "text_prompts": [{"text": prompt[:500], "weight": 1}],
-                "cfg_scale": 7,
-                "height": 1024,
-                "width": 1024,
-                "samples": 1,
-                "steps": 30
+                "model": "stable-diffusion-xl-1024-v1-0",
+                "prompt": prompt[:500],
+                "n": 1,
+                "size": "1024x1024"
             }
             
             resp = requests.post(api_url, json=payload, headers=headers, timeout=60)
             resp.raise_for_status()
             data = resp.json()
             
-            # Extract base64 image
-            if "artifacts" in data and len(data["artifacts"]) > 0:
-                import base64
-                img_data = base64.b64decode(data["artifacts"][0]["base64"])
-                
+            # Extract image (ProxyAPI returns similar to OpenAI format)
+            image_data = None
+            if "data" in data and len(data["data"]) > 0:
+                img_info = data["data"][0]
+                if "url" in img_info:
+                    img_resp = requests.get(img_info["url"], timeout=30)
+                    img_resp.raise_for_status()
+                    image_data = img_resp.content
+                elif "b64_json" in img_info:
+                    image_data = base64.b64decode(img_info["b64_json"])
+            
+            if image_data:
                 # Save image
                 temp_dir = os.path.join(os.path.dirname(__file__), "..", "static", "generated")
                 os.makedirs(temp_dir, exist_ok=True)
@@ -43,11 +49,12 @@ def generate_image(prompt: str) -> str:
                 image_path = os.path.join(temp_dir, f"image_{timestamp}.jpg")
                 
                 with open(image_path, "wb") as f:
-                    f.write(img_data)
+                    f.write(image_data)
                 
                 return f"/static/generated/image_{timestamp}.jpg"
+                
         except Exception as e:
-            print(f"Stability AI error: {e}")
+            print(f"ProxyAPI error: {e}")
     
     # Fallback: Generate simple PIL image with text
     try:
