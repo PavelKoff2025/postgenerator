@@ -1,8 +1,11 @@
 import os
 import base64
 import requests
+import time
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
+import io
+import io
 
 def generate_image(prompt: str) -> str:
     """Generate image using ProxyAPI.ru or fallback to PIL"""
@@ -27,7 +30,7 @@ def generate_image(prompt: str) -> str:
             resp.raise_for_status()
             data = resp.json()
             
-            # Extract image (OpenAI format: b64_json or URL)
+            # Extract image from OpenAI format
             image_data = None
             if "data" in data and len(data["data"]) > 0:
                 img_info = data["data"][0]
@@ -39,7 +42,7 @@ def generate_image(prompt: str) -> str:
                     image_data = img_resp.content
             
             if image_data:
-                # Save image
+                # Save image to static/generated
                 temp_dir = os.path.join(os.path.dirname(__file__), "..", "static", "generated")
                 os.makedirs(temp_dir, exist_ok=True)
                 timestamp = int(time.time())
@@ -49,7 +52,8 @@ def generate_image(prompt: str) -> str:
                     f.write(image_data)
                 
                 return f"/static/generated/image_{timestamp}.jpg"
-                
+            else:
+                print("No image data in API response")
         except Exception as e:
             print(f"ProxyAPI error: {e}")
     
