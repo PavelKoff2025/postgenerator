@@ -6,6 +6,7 @@ import textwrap
 
 def generate_image(prompt: str) -> str:
     """Generate image using ProxyAPI.ru or fallback to PIL"""
+    # Try ProxyAPI.ru (OpenAI-compatible endpoint)
     api_key = os.getenv("PROXYAPI_KEY")
     api_url = os.getenv("PROXYAPI_URL", "https://api.proxyapi.ru/openai/v1/images/generations")
     
@@ -26,31 +27,33 @@ def generate_image(prompt: str) -> str:
             resp.raise_for_status()
             data = resp.json()
             
+            # Extract image (OpenAI format: b64_json or URL)
+            image_data = None
             if "data" in data and len(data["data"]) > 0:
                 img_info = data["data"][0]
-                image_data = None
-                
                 if "b64_json" in img_info:
                     image_data = base64.b64decode(img_info["b64_json"])
                 elif "url" in img_info:
                     img_resp = requests.get(img_info["url"], timeout=30)
                     img_resp.raise_for_status()
                     image_data = img_resp.content
+            
+            if image_data:
+                # Save image
+                temp_dir = os.path.join(os.path.dirname(__file__), "..", "static", "generated")
+                os.makedirs(temp_dir, exist_ok=True)
+                timestamp = int(time.time())
+                image_path = os.path.join(temp_dir, f"image_{timestamp}.jpg")
                 
-                if image_data:
-                    temp_dir = os.path.join(os.path.dirname(__file__), "..", "static", "generated")
-                    os.makedirs(temp_dir, exist_ok=True)
-                    timestamp = int(time.time())
-                    image_path = os.path.join(temp_dir, f"image_{timestamp}.jpg")
-                    
-                    with open(image_path, "wb") as f:
-                        f.write(image_data)
-                    
-                    return f"/static/generated/image_{timestamp}.jpg"
+                with open(image_path, "wb") as f:
+                    f.write(image_data)
+                
+                return f"/static/generated/image_{timestamp}.jpg"
+                
         except Exception as e:
             print(f"ProxyAPI error: {e}")
     
-    # Fallback: PIL image
+    # Fallback: Generate simple PIL image with text
     try:
         width, height = 800, 600
         image = Image.new('RGB', (width, height), color='#4f46e5')
