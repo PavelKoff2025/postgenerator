@@ -169,12 +169,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    // Генерация изображения
     const genImageBtn = document.getElementById("genImageBtn");
     const imageConfirm = document.getElementById("imageConfirm");
     const imageContainer = document.getElementById("imageContainer");
     const generatedImage = document.getElementById("generatedImage");
 
-    // Генерация изображения
     genImageBtn.addEventListener("click", async () => {
         if (!currentPost) return;
         genImageBtn.disabled = true;
@@ -189,7 +189,8 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             const data = await response.json();
             if (data.status === "ok") {
-                generatedImage.src = data.image_url;
+                // Force reload image by adding timestamp
+                generatedImage.src = data.image_url + "?t=" + new Date().getTime();
                 imageContainer.classList.remove("hidden");
                 imageConfirm.classList.remove("hidden");
             } else {
