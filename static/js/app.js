@@ -44,7 +44,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (data.status === "ok") {
                 currentPost = data;
-                postText.textContent = data.text;
+                // Отображаем текст с поддержкой Markdown (жирный шрифт)
+                postText.innerHTML = data.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                 hashtags.innerHTML = data.hashtags
                     .map(tag => `<span class="hashtag">${tag}</span>`)
                     .join("");
