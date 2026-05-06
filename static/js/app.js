@@ -20,11 +20,6 @@ document.addEventListener("DOMContentLoaded", function() {
     var publishDate = document.getElementById("publishDate");
     var favoritesList = document.getElementById("favoritesList");
     var clearFavBtn = document.getElementById("clearFavBtn");
-    var genImageBtn = document.getElementById("genImageBtn");
-    var imageConfirm = document.getElementById("imageConfirm");
-    var imageContainer = document.getElementById("imageContainer");
-    var generatedImage = document.getElementById("generatedImage");
-
     var currentPost = null;
 
     // Generate post
@@ -137,42 +132,6 @@ document.addEventListener("DOMContentLoaded", function() {
     // Toggle date picker
     scheduleCheck.addEventListener("change", function() {
         publishDate.classList.toggle("hidden", !scheduleCheck.checked);
-    });
-
-    // Generate image
-    genImageBtn.addEventListener("click", async function() {
-        if (!currentPost) {
-            alert("Сначала сгенерируйте пост!");
-            return;
-        }
-        genImageBtn.disabled = true;
-        genImageBtn.textContent = "Генерация...";
-        imageConfirm.classList.add("hidden");
-
-        try {
-            console.log("Generating image for text:", currentPost.text.substring(0, 50) + "...");
-            var response = await fetch("/generate-image", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: currentPost.text })
-            });
-            var data = await response.json();
-            console.log("Image generation response:", data);
-            
-            if (data.status === "ok") {
-                generatedImage.src = data.image_url + "?t=" + new Date().getTime();
-                imageContainer.classList.remove("hidden");
-                imageConfirm.classList.remove("hidden");
-            } else {
-                alert("Ошибка: " + (data.message || "неизвестная ошибка"));
-            }
-        } catch (err) {
-            console.error("Image generation error:", err);
-            alert("Ошибка генерации изображения");
-        } finally {
-            genImageBtn.disabled = false;
-            genImageBtn.textContent = "Создать изображение";
-        }
     });
 
     // Clear favorites

@@ -1,6 +1,7 @@
 import os
 import requests
 import time
+import re
 
 def publish_to_vk(text, hashtags, publish_date=None):
     """Публикует пост в сообщество ВК.
@@ -18,6 +19,9 @@ def publish_to_vk(text, hashtags, publish_date=None):
     
     if not token or not group_id:
         raise Exception("Не заданы VK_ACCESS_TOKEN или VK_GROUP_ID в .env")
+    
+    # Убираем markdown-разметку (**жирный**)
+    text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
     
     # Формируем полный текст
     full_text = text
