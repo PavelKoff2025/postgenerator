@@ -3,31 +3,38 @@ import time
 import requests
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
-import base64
 import io
 
 def generate_image(prompt: str) -> str:
-    """Generate image using Hugging Face Inference API or fallback to PIL"""
-    # Try Hugging Face API (free tier)
-    hf_token = os.getenv("HUGGINGFACE_TOKEN")
+    """Generate image using Stability AI or fallback to PIL"""
+    # Try Stability AI API (free tier available)
+    stability_key = os.getenv("STABILITY_API_KEY")
     
-    if hf_token:
+    if stability_key:
         try:
-            # Use a popular image generation model on Hugging Face
-            api_url = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
-            headers = {"Authorization": f"Bearer {hf_token}"}
+            api_url = "https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image"
+            headers = {
+                "Authorization": f"Bearer {stability_key}",
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+            payload = {
+                "text_prompts": [{"text": prompt[:500], "weight": 1}],
+                "cfg_scale": 7,
+                "height": 1024,
+                "width": 1024,
+                "samples": 1,
+                "steps": 30
+            }
             
-            # Hugging Face expects different format
-            response = requests.post(
-                api_url,
-                headers=headers,
-                json={"inputs": prompt[:200]},
-                timeout=60
-            )
+            resp = requests.post(api_url, json=payload, headers=headers, timeout=60)
+            resp.raise_for_status()
+            data = resp.json()
             
-            if response.status_code == 200:
-                # Response is the image bytes directly
-                img_data = response.content
+            # Extract base64 image
+            if "artifacts" in data and len(data["artifacts"]) > 0:
+                import base64
+                img_data = base64.b64decode(data["artifacts"][0]["base64"])
                 
                 # Save image
                 temp_dir = os.path.join(os.path.dirname(__file__), "..", "static", "generated")
@@ -39,10 +46,8 @@ def generate_image(prompt: str) -> str:
                     f.write(img_data)
                 
                 return f"/static/generated/image_{timestamp}.jpg"
-            else:
-                print(f"Hugging Face API error: {response.status_code} - {response.text}")
         except Exception as e:
-            print(f"Hugging Face error: {e}")
+            print(f"Stability AI error: {e}")
     
     # Fallback: Generate simple PIL image with text
     try:
