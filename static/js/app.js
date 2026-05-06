@@ -1,33 +1,34 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const form = document.getElementById("urlForm");
-    const urlInput = document.getElementById("urlInput");
-    const generateBtn = document.getElementById("generateBtn");
-    const btnText = document.getElementById("btnText");
-    const btnLoader = document.getElementById("btnLoader");
-    const errorBlock = document.getElementById("errorBlock");
-    const resultBlock = document.getElementById("resultBlock");
-    const postText = document.getElementById("postText");
-    const hashtags = document.getElementById("hashtags");
-    const copyBtn = document.getElementById("copyBtn");
-    const copyConfirm = document.getElementById("copyConfirm");
-    const favBtn = document.getElementById("favBtn");
-    const favConfirm = document.getElementById("favConfirm");
-    const publishBtn = document.getElementById("publishBtn");
-    const publishError = document.getElementById("publishError");
-    const publishSuccess = document.getElementById("publishSuccess");
-    const scheduleCheck = document.getElementById("scheduleCheck");
-    const publishDate = document.getElementById("publishDate");
-    const favoritesList = document.getElementById("favoritesList");
-    const clearFavBtn = document.getElementById("clearFavBtn");
-    const genImageBtn = document.getElementById("genImageBtn");
-    const imageConfirm = document.getElementById("imageConfirm");
-    const imageContainer = document.getElementById("imageContainer");
-    const generatedImage = document.getElementById("generatedImage");
+document.addEventListener("DOMContentLoaded", function() {
+    // Get elements
+    var form = document.getElementById("urlForm");
+    var urlInput = document.getElementById("urlInput");
+    var generateBtn = document.getElementById("generateBtn");
+    var btnText = document.getElementById("btnText");
+    var btnLoader = document.getElementById("btnLoader");
+    var errorBlock = document.getElementById("errorBlock");
+    var resultBlock = document.getElementById("resultBlock");
+    var postText = document.getElementById("postText");
+    var hashtags = document.getElementById("hashtags");
+    var copyBtn = document.getElementById("copyBtn");
+    var copyConfirm = document.getElementById("copyConfirm");
+    var favBtn = document.getElementById("favBtn");
+    var favConfirm = document.getElementById("favConfirm");
+    var publishBtn = document.getElementById("publishBtn");
+    var publishError = document.getElementById("publishError");
+    var publishSuccess = document.getElementById("publishSuccess");
+    var scheduleCheck = document.getElementById("scheduleCheck");
+    var publishDate = document.getElementById("publishDate");
+    var favoritesList = document.getElementById("favoritesList");
+    var clearFavBtn = document.getElementById("clearFavBtn");
+    var genImageBtn = document.getElementById("genImageBtn");
+    var imageConfirm = document.getElementById("imageConfirm");
+    var imageContainer = document.getElementById("imageContainer");
+    var generatedImage = document.getElementById("generatedImage");
 
-    let currentPost = null;
+    var currentPost = null;
 
     // Generate post
-    form.addEventListener("submit", async (e) => {
+    form.addEventListener("submit", async function(e) {
         e.preventDefault();
         errorBlock.classList.add("hidden");
         resultBlock.classList.add("hidden");
@@ -38,19 +39,18 @@ document.addEventListener("DOMContentLoaded", () => {
         btnLoader.classList.remove("hidden");
 
         try {
-            const response = await fetch("/generate", {
+            var response = await fetch("/generate", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ url: urlInput.value })
             });
-
-            const data = await response.json();
+            var data = await response.json();
 
             if (data.status === "ok") {
                 currentPost = data;
                 postText.innerHTML = data.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                 hashtags.innerHTML = data.hashtags
-                    .map(tag => `<span class="hashtag">${tag}</span>`)
+                    .map(function(tag) { return '<span class="hashtag">' + tag + '</span>'; })
                     .join("");
                 resultBlock.classList.remove("hidden");
             } else {
@@ -68,28 +68,28 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Copy
-    copyBtn.addEventListener("click", () => {
+    copyBtn.addEventListener("click", function() {
         if (!currentPost) return;
-        const fullText = currentPost.text + "\n\n" + currentPost.hashtags.join(" ");
-        navigator.clipboard.writeText(fullText).then(() => {
+        var fullText = currentPost.text + "\n\n" + currentPost.hashtags.join(" ");
+        navigator.clipboard.writeText(fullText).then(function() {
             copyConfirm.classList.remove("hidden");
-            setTimeout(() => copyConfirm.classList.add("hidden"), 2000);
+            setTimeout(function() { copyConfirm.classList.add("hidden"); }, 2000);
         });
     });
 
     // Favorites
-    favBtn.addEventListener("click", async () => {
+    favBtn.addEventListener("click", async function() {
         if (!currentPost) return;
         try {
-            const response = await fetch("/favorites", {
+            var response = await fetch("/favorites", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(currentPost)
             });
-            const data = await response.json();
+            var data = await response.json();
             if (data.status === "ok") {
                 favConfirm.classList.remove("hidden");
-                setTimeout(() => favConfirm.classList.add("hidden"), 2000);
+                setTimeout(function() { favConfirm.classList.add("hidden"); }, 2000);
                 loadFavorites();
             }
         } catch (err) {
@@ -98,12 +98,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Publish to VK
-    publishBtn.addEventListener("click", async () => {
+    publishBtn.addEventListener("click", async function() {
         if (!currentPost) return;
         publishError.classList.add("hidden");
         publishSuccess.classList.add("hidden");
 
-        const payload = {
+        var payload = {
             text: currentPost.text,
             hashtags: currentPost.hashtags
         };
@@ -113,12 +113,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-            const response = await fetch("/publish-vk", {
+            var response = await fetch("/publish-vk", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             });
-            const data = await response.json();
+            var data = await response.json();
             if (data.status === "ok") {
                 publishSuccess.textContent = scheduleCheck.checked
                     ? "Запланировано!"
@@ -135,32 +135,39 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Toggle date picker
-    scheduleCheck.addEventListener("change", () => {
+    scheduleCheck.addEventListener("change", function() {
         publishDate.classList.toggle("hidden", !scheduleCheck.checked);
     });
 
     // Generate image
-    genImageBtn.addEventListener("click", async () => {
-        if (!currentPost) return;
+    genImageBtn.addEventListener("click", async function() {
+        if (!currentPost) {
+            alert("Сначала сгенерируйте пост!");
+            return;
+        }
         genImageBtn.disabled = true;
         genImageBtn.textContent = "Генерация...";
         imageConfirm.classList.add("hidden");
 
         try {
-            const response = await fetch("/generate-image", {
+            console.log("Generating image for text:", currentPost.text.substring(0, 50) + "...");
+            var response = await fetch("/generate-image", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ text: currentPost.text })
             });
-            const data = await response.json();
+            var data = await response.json();
+            console.log("Image generation response:", data);
+            
             if (data.status === "ok") {
                 generatedImage.src = data.image_url + "?t=" + new Date().getTime();
                 imageContainer.classList.remove("hidden");
                 imageConfirm.classList.remove("hidden");
             } else {
-                alert("Ошибка: " + data.message);
+                alert("Ошибка: " + (data.message || "неизвестная ошибка"));
             }
         } catch (err) {
+            console.error("Image generation error:", err);
             alert("Ошибка генерации изображения");
         } finally {
             genImageBtn.disabled = false;
@@ -169,7 +176,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // Clear favorites
-    clearFavBtn.addEventListener("click", async () => {
+    clearFavBtn.addEventListener("click", async function() {
         if (confirm("Очистить все избранное?")) {
             await fetch("/favorites", { method: "DELETE" });
             loadFavorites();
@@ -179,11 +186,11 @@ document.addEventListener("DOMContentLoaded", () => {
     // Load favorites
     async function loadFavorites() {
         try {
-            const response = await fetch("/favorites");
-            const favorites = await response.json();
+            var response = await fetch("/favorites");
+            var favorites = await response.json();
             favoritesList.innerHTML = "";
-            favorites.forEach(fav => {
-                const div = document.createElement("div");
+            favorites.forEach(function(fav) {
+                var div = document.createElement("div");
                 div.className = "fav-item";
                 div.innerHTML = `
                     <div class="fav-item-text">${fav.text}</div>
@@ -193,13 +200,13 @@ document.addEventListener("DOMContentLoaded", () => {
                         <button class="btn-delete">Удалить</button>
                     </div>
                 `;
-                div.querySelector(".btn-copy-fav").addEventListener("click", () => {
-                    const fullText = fav.text + "\n\n" + fav.hashtags.join(" ");
+                div.querySelector(".btn-copy-fav").addEventListener("click", function() {
+                    var fullText = fav.text + "\n\n" + fav.hashtags.join(" ");
                     navigator.clipboard.writeText(fullText);
                     alert("Скопировано!");
                 });
-                div.querySelector(".btn-delete").addEventListener("click", async () => {
-                    await fetch(`/favorites?id=${fav.id}`, { method: "DELETE" });
+                div.querySelector(".btn-delete").addEventListener("click", async function() {
+                    await fetch("/favorites?id=" + fav.id, { method: "DELETE" });
                     loadFavorites();
                 });
                 favoritesList.appendChild(div);
