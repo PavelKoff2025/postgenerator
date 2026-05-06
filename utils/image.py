@@ -5,7 +5,7 @@ from PIL import Image, ImageDraw, ImageFont
 import textwrap
 
 def generate_image(prompt: str) -> str:
-    """Generate image using ProxyAPI.ru or fallback"""
+    """Generate image using ProxyAPI.ru or fallback to PIL"""
     api_key = os.getenv("PROXYAPI_KEY")
     api_url = os.getenv("PROXYAPI_URL", "https://api.proxyapi.ru/openai/v1/images/generations")
     
@@ -66,7 +66,7 @@ def generate_image(prompt: str) -> str:
         
         y_offset = height // 2 - (len(lines) * 30) // 2
         for line in lines:
-            bbox = draw.textbbox((0,0), line, font=font)
+            bbox = draw.textbbox((0, 0), line, font=font)
             text_width = bbox[2] - bbox[0]
             x = (width - text_width) // 2
             draw.text((x, y_offset), line, fill='white', font=font)

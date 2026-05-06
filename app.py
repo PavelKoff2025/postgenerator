@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, jsonify
+from flask_wtf import CSRFProtect
 from dotenv import load_dotenv
 import os
 
@@ -11,6 +12,8 @@ from utils.image import generate_image
 load_dotenv()
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', os.urandom(32).hex())
+csrf = CSRFProtect(app)
 
 @app.route("/")
 def index():
@@ -25,6 +28,10 @@ def generate():
     url = data["url"].strip()
     if not url:
         return jsonify({"status": "error", "message": "URL не может быть пустым"}), 400
+
+    # Basic URL validation
+    if not url.startswith(("http://", "https://")):
+        return jsonify({"status": "error", "message": "URL должен начинаться с http:// или https://"}), 400
 
     try:
         text = extract_text_from_url(url)
@@ -44,11 +51,11 @@ def publish_vk():
     data = request.get_json(silent=True)
     if not data:
         return jsonify({"status": "error", "message": "Некорректный запрос"}), 400
-    
+
     text = data.get("text", "")
     hashtags = data.get("hashtags", [])
     publish_date = data.get("publish_date")
-    
+
     try:
         result = publish_to_vk(text, hashtags, publish_date)
         return jsonify(result)
@@ -59,14 +66,14 @@ def publish_vk():
 def favorites():
     if request.method == "GET":
         return jsonify(load_favorites())
-    
+
     if request.method == "POST":
         data = request.get_json(silent=True)
         if not data:
             return jsonify({"status": "error", "message": "Некорректный запрос"}), 400
         post_id = save_favorite(data)
         return jsonify({"status": "ok", "id": post_id})
-    
+
     if request.method == "DELETE":
         post_id = request.args.get("id")
         if post_id:
@@ -80,7 +87,7 @@ def generate_image_route():
     data = request.get_json(silent=True)
     if not data or "text" not in data:
         return jsonify({"status": "error", "message": "Некорректный запрос"}), 400
-    
+
     text = data["text"]
     try:
         image_path = generate_image(text)
