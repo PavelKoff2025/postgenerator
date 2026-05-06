@@ -1,16 +1,14 @@
 import os
-import time
-import requests
 import base64
+import requests
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
-import io
 
 def generate_image(prompt: str) -> str:
-    """Generate image using ProxyAPI.ru or fallback to PIL"""
-    # Try ProxyAPI.ru first
+    """Generate image using ProxyAPI.ru (OpenAI-compatible) or fallback to PIL"""
+    # Try ProxyAPI.ru (OpenAI-compatible endpoint)
     api_key = os.getenv("PROXYAPI_KEY")
-    api_url = os.getenv("PROXYAPI_URL", "https://api.proxyapi.ru/v1/images/generations")
+    api_url = os.getenv("PROXYAPI_URL", "https://api.proxyapi.ru/openai/v1/images/generations")
     
     if api_key:
         try:
@@ -18,9 +16,9 @@ def generate_image(prompt: str) -> str:
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json"
             }
-            # ProxyAPI supports multiple models, using Stable Diffusion XL
+            # Using gpt-image-2 model via ProxyAPI
             payload = {
-                "model": "stable-diffusion-xl-1024-v1-0",
+                "model": "gpt-image-2",
                 "prompt": prompt[:500],
                 "n": 1,
                 "size": "1024x1024"
@@ -30,16 +28,16 @@ def generate_image(prompt: str) -> str:
             resp.raise_for_status()
             data = resp.json()
             
-            # Extract image (ProxyAPI returns similar to OpenAI format)
+            # Extract image (OpenAI format: b64_json or URL)
             image_data = None
             if "data" in data and len(data["data"]) > 0:
                 img_info = data["data"][0]
-                if "url" in img_info:
+                if "b64_json" in img_info:
+                    image_data = base64.b64decode(img_info["b64_json"])
+                elif "url" in img_info:
                     img_resp = requests.get(img_info["url"], timeout=30)
                     img_resp.raise_for_status()
                     image_data = img_resp.content
-                elif "b64_json" in img_info:
-                    image_data = base64.b64decode(img_info["b64_json"])
             
             if image_data:
                 # Save image
