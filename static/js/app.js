@@ -19,6 +19,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const publishDate = document.getElementById("publishDate");
     const favoritesList = document.getElementById("favoritesList");
     const clearFavBtn = document.getElementById("clearFavBtn");
+    const genImageBtn = document.getElementById("genImageBtn");
+    const imageConfirm = document.getElementById("imageConfirm");
+    const imageContainer = document.getElementById("imageContainer");
+    const generatedImage = document.getElementById("generatedImage");
 
     let currentPost = null;
 
@@ -44,7 +48,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (data.status === "ok") {
                 currentPost = data;
-                // Отображаем текст с поддержкой Markdown (жирный шрифт)
                 postText.innerHTML = data.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
                 hashtags.innerHTML = data.hashtags
                     .map(tag => `<span class="hashtag">${tag}</span>`)
@@ -117,8 +120,8 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             const data = await response.json();
             if (data.status === "ok") {
-                publishSuccess.textContent = scheduleCheck.checked 
-                    ? "Запланировано!" 
+                publishSuccess.textContent = scheduleCheck.checked
+                    ? "Запланировано!"
                     : "Опубликовано!";
                 publishSuccess.classList.remove("hidden");
             } else {
@@ -170,11 +173,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Генерация изображения
-    const genImageBtn = document.getElementById("genImageBtn");
-    const imageConfirm = document.getElementById("imageConfirm");
-    const imageContainer = document.getElementById("imageContainer");
-    const generatedImage = document.getElementById("generatedImage");
-
     genImageBtn.addEventListener("click", async () => {
         if (!currentPost) return;
         genImageBtn.disabled = true;
@@ -189,7 +187,6 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             const data = await response.json();
             if (data.status === "ok") {
-                // Force reload image by adding timestamp
                 generatedImage.src = data.image_url + "?t=" + new Date().getTime();
                 imageContainer.classList.remove("hidden");
                 imageConfirm.classList.remove("hidden");
@@ -203,6 +200,7 @@ document.addEventListener("DOMContentLoaded", () => {
             genImageBtn.textContent = "Создать изображение";
         }
     });
+
     clearFavBtn.addEventListener("click", async () => {
         if (confirm("Очистить все избранное?")) {
             await fetch("/favorites", { method: "DELETE" });
