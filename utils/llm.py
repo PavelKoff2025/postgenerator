@@ -1,5 +1,6 @@
 import os
 import time
+import re
 from gigachat import GigaChat
 
 SYSTEM_PROMPT = """Ты — senior контент-стратег и B2B-SMM эксперт. Твоя задача — превращать лонгриды в профессиональные посты для соцсетей (Telegram, VK, LinkedIn).
@@ -13,44 +14,91 @@ SYSTEM_PROMPT = """Ты — senior контент-стратег и B2B-SMM эк
    • Заголовок-хук (1 строка)
    • Ключевой инсайт/вывод из статьи (2–3 предложения)
    • Практическая польза или вопрос для профессиональной дискуссии (1 предложение)
-   • Призыв к действию (CTA) — 1 предложение (подписка, комментарий, сохранение)
-   • 3–5 релевантных хештегов через пробел
+   • Призыв к действию (CTA) — 1 предложение
+   • 3–5 релевантных хештегов (каждый с #, через пробел в конце поста)
 3. СОДЕРЖАНИЕ: выделяй только главную мысль, метрику, тренд или actionable-совет из текста. Не пересказывай статью.
-4. ФОРМАТ ВЫВОДА: только готовый пост. Без вступлений, пояснений, кавычек, пометок «Вот пост:» или «Хештеги:».
+4. ФОРМАТ ВЫВОДА: только готовый пост. БЕЗ JSON, БЕЗ фигурных {} и квадратных [] скобок, без вступлений, кавычек, пометок «Вот пост:» или «Хештеги:».
 
 Пример структуры (референс формата, не копировать дословно):
 Как снизить CAC на 30% без увеличения бюджета
 В новом исследовании показано, что автоматизация ретаргетинга и чистка аудиторий по поведенческим сигналам дают быстрый эффект. Ключ — не в новых каналах, а в оптимизации текущих касаний.
 Какие метрики вы отслеживаете в первую очередь при масштабировании рекламы?
+Подписывайтесь на канал для новых инсайтов!
 #цифровоймаркетинг #performance #roi #маркетинговаястратегия #edtech
 
 Начни генерацию сразу после получения текста статьи. Соблюдай лимит ≤ 2000 символов."""
 
 def generate_post(article_text: str) -> dict:
     credentials = os.getenv("GIGACHAT_CLIENT_SECRET")
-    user_prompt = f"{article_text[:6000]}\n\nОтветь строго в JSON формате: {{\"text\": \"текст поста\", \"hashtags\": [\"#тег1\", \"#тег2\"]}}"
-
+    
     for attempt in range(2):
         try:
             with GigaChat(credentials=credentials, verify_ssl_certs=False) as client:
-                response = client.chat(SYSTEM_PROMPT + "\n\n" + user_prompt)
+                response = client.chat(
+                    SYSTEM_PROMPT + "\n\nТекст статьи:\n" + article_text[:6000]
+                )
                 raw = response.choices[0].message.content.strip()
                 break
         except Exception as e:
             if attempt == 1:
                 raise
             time.sleep(1)
-
-    import json
-    try:
-        result = json.loads(raw)
-        text = result.get("text", raw)
-        hashtags = result.get("hashtags", [])
-    except:
-        text = raw
+    
+    # Убираем все следы JSON и лишние символы
+    text = raw
+    # Удаляем JSON-подобные конструкции
+    text = re.sub(r'\{[^{}]*\}', '', text)  # убираем { ... }
+    text = re.sub(r'\[[^\[\]]*\]', '', text)  # убираем [ ... ]
+    text = re.sub(r'"(text|hashtags)":\s*', '', text)  # убираем "text": и "hashtags":
+    text = re.sub(r'^["\s]+|["\s]+$', '', text)  # убираем кавычки и пробелы по краям
+    
+    # Извлекаем хештеги (последние строки с #)
+    lines = text.split('\n')
+    hashtag_line = ''
+    text_lines = []
+    
+    for line in lines:
+        if line.strip().startswith('#'):
+            hashtag_line = line.strip()
+        else:
+            text_lines.append(line)
+    
+    # Если хештеги не в отдельной строке, ищем в тексте
+    if not hashtag_line:
+        hashtag_pattern = r'#\w+'
+        found = re.findall(hashtag_pattern, text)
+        if found:
+            hashtag_line = ' '.join(found)
+            # Убираем хештеги из текста
+            text = re.sub(hashtag_pattern, '', text)
+    
+    # Очищаем текст
+    text = re.sub(r'\n\s*\n', '\n', text)  # убираем пустые строки
+    text = re.sub(r' +', ' ', text).strip()  # убираем лишние пробелы
+    
+    # Разбираем хештеги
+    if hashtag_line:
+        hashtags = [h.strip() for h in hashtag_line.split() if h.strip().startswith('#')]
+    else:
+        hashtags = []
+    
+    # Удаляем дубликаты хештегов
+    seen = set()
+    unique_hashtags = []
+    for h in hashtags:
+        h_lower = h.lower()
+        if h_lower not in seen:
+            seen.add(h_lower)
+            unique_hashtags.append(h)
+    hashtags = unique_hashtags[:5]
+    
+    # Проверка лимита символов
+    full_text = text + " " + " ".join(hashtags)
+    if len(full_text) > 2000:
+        max_text_len = 2000 - len(" ".join(hashtags)) - 1
+        text = text[:max_text_len].rsplit(' ', 1)[0]
+    
+    if not hashtags:
         hashtags = ["#маркетинг", "#digital", "#стратегия"]
-
-    if len(text) > 2000:
-        text = text[:1997].rsplit(' ', 1)[0] + '...'
-
+    
     return {"status": "ok", "text": text, "hashtags": hashtags}
