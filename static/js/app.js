@@ -168,7 +168,39 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    // Очистка избранного
+    const genImageBtn = document.getElementById("genImageBtn");
+    const imageConfirm = document.getElementById("imageConfirm");
+    const imageContainer = document.getElementById("imageContainer");
+    const generatedImage = document.getElementById("generatedImage");
+
+    // Генерация изображения
+    genImageBtn.addEventListener("click", async () => {
+        if (!currentPost) return;
+        genImageBtn.disabled = true;
+        genImageBtn.textContent = "Генерация...";
+        imageConfirm.classList.add("hidden");
+
+        try {
+            const response = await fetch("/generate-image", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: currentPost.text })
+            });
+            const data = await response.json();
+            if (data.status === "ok") {
+                generatedImage.src = data.image_url;
+                imageContainer.classList.remove("hidden");
+                imageConfirm.classList.remove("hidden");
+            } else {
+                alert("Ошибка: " + data.message);
+            }
+        } catch (err) {
+            alert("Ошибка генерации изображения");
+        } finally {
+            genImageBtn.disabled = false;
+            genImageBtn.textContent = "Создать изображение";
+        }
+    });
     clearFavBtn.addEventListener("click", async () => {
         if (confirm("Очистить все избранное?")) {
             await fetch("/favorites", { method: "DELETE" });

@@ -6,6 +6,7 @@ from utils.parser import extract_text_from_url
 from utils.llm import generate_post
 from utils.vk import publish_to_vk
 from utils.storage import load_favorites, save_favorite, delete_favorite, clear_favorites
+from utils.image import generate_image
 
 load_dotenv()
 
@@ -73,6 +74,19 @@ def favorites():
         else:
             clear_favorites()
         return jsonify({"status": "ok"})
+
+@app.route("/generate-image", methods=["POST"])
+def generate_image_route():
+    data = request.get_json(silent=True)
+    if not data or "text" not in data:
+        return jsonify({"status": "error", "message": "Некорректный запрос"}), 400
+    
+    text = data["text"]
+    try:
+        image_path = generate_image(text)
+        return jsonify({"status": "ok", "image_url": image_path})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=True, port=5002)
