@@ -30,8 +30,32 @@
             <h2>Результат</h2>
             <div class="post-text" id="postText"></div>
             <div class="hashtags" id="hashtags"></div>
-            <button id="copyBtn" class="btn-secondary">Копировать</button>
-            <span id="copyConfirm" class="copy-confirm hidden">Скопировано!</span>
+            
+            <div class="actions">
+                <button id="copyBtn" class="btn-secondary">Копировать</button>
+                <span id="copyConfirm" class="copy-confirm hidden">Скопировано!</span>
+                <button id="favBtn" class="btn-secondary">В избранное</button>
+                <span id="favConfirm" class="copy-confirm hidden">Сохранено!</span>
+            </div>
+            
+            <div class="publish-section">
+                <h3>Опубликовать в ВК</h3>
+                <div class="input-row">
+                    <label>
+                        <input type="checkbox" id="scheduleCheck"> Отложить публикацию
+                    </label>
+                    <input type="datetime-local" id="publishDate" class="hidden">
+                </div>
+                <button id="publishBtn" class="btn-primary">Опубликовать пост</button>
+                <div id="publishError" class="error-block hidden"></div>
+                <div id="publishSuccess" class="success-block hidden">Опубликовано!</div>
+            </div>
+        </div>
+
+        <div id="favoritesBlock" class="result-block">
+            <h2>Избранное</h2>
+            <div id="favoritesList"></div>
+            <button id="clearFavBtn" class="btn-secondary">Очистить всё</button>
         </div>
     </div>
 

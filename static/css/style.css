@@ -152,6 +152,110 @@ input[type="url"]:focus {
     background: #d1d5db;
 }
 
+.publish-section {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.publish-section h3 {
+    font-size: 1rem;
+    margin-bottom: 12px;
+}
+
+.input-row {
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.input-row label {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    cursor: pointer;
+}
+
+.input-row input[type="datetime-local"] {
+    padding: 8px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.success-block {
+    background: #ecfdf5;
+    color: #059669;
+    padding: 12px;
+    border-radius: var(--radius);
+    margin-top: 12px;
+    font-size: 0.9rem;
+}
+
+#favoritesBlock {
+    margin-top: 32px;
+}
+
+.fav-item {
+    background: #f9fafb;
+    padding: 16px;
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    border: 1px solid #e5e7eb;
+}
+
+.fav-item-text {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 8px;
+    white-space: pre-wrap;
+}
+
+.fav-item-meta {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-bottom: 8px;
+}
+
+.fav-item-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.fav-item-actions button {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn-delete {
+    background: #fee2e2;
+    color: var(--error);
+}
+
+.btn-delete:hover {
+    background: #fecaca;
+}
+
+.btn-copy-fav {
+    background: #e5e7eb;
+    color: var(--text);
+}
+
+.btn-copy-fav:hover {
+    background: #d1d5db;
+}
+
+.actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
 .copy-confirm {
     margin-left: 12px;
     color: #10b981;
