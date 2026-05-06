@@ -29,7 +29,6 @@ def generate():
     if not url:
         return jsonify({"status": "error", "message": "URL не может быть пустым"}), 400
 
-    # Basic URL validation
     if not url.startswith(("http://", "https://")):
         return jsonify({"status": "error", "message": "URL должен начинаться с http:// или https://"}), 400
 
