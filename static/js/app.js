@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let currentPost = null;
 
-    // Генерация поста
+    // Generate post
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
         errorBlock.classList.add("hidden");
@@ -67,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Копирование
+    // Copy
     copyBtn.addEventListener("click", () => {
         if (!currentPost) return;
         const fullText = currentPost.text + "\n\n" + currentPost.hashtags.join(" ");
@@ -77,7 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // В избранное
+    // Favorites
     favBtn.addEventListener("click", async () => {
         if (!currentPost) return;
         try {
@@ -97,7 +97,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Публикация в ВК
+    // Publish to VK
     publishBtn.addEventListener("click", async () => {
         if (!currentPost) return;
         publishError.classList.add("hidden");
@@ -134,45 +134,12 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Показать/скрыть выбор даты
+    // Toggle date picker
     scheduleCheck.addEventListener("change", () => {
         publishDate.classList.toggle("hidden", !scheduleCheck.checked);
     });
 
-    // Загрузка избранного
-    async function loadFavorites() {
-        try {
-            const response = await fetch("/favorites");
-            const favorites = await response.json();
-            favoritesList.innerHTML = "";
-            favorites.forEach(fav => {
-                const div = document.createElement("div");
-                div.className = "fav-item";
-                div.innerHTML = `
-                    <div class="fav-item-text">${fav.text}</div>
-                    <div class="fav-item-meta">Сохранено: ${fav.saved_at || "—"}</div>
-                    <div class="fav-item-actions">
-                        <button class="btn-copy-fav" onclick="copyFavText(this)">Копировать</button>
-                        <button class="btn-delete" onclick="deleteFav(${fav.id})">Удалить</button>
-                    </div>
-                `;
-                div.querySelector(".btn-copy-fav").addEventListener("click", () => {
-                    const fullText = fav.text + "\n\n" + fav.hashtags.join(" ");
-                    navigator.clipboard.writeText(fullText);
-                    alert("Скопировано!");
-                });
-                div.querySelector(".btn-delete").addEventListener("click", async () => {
-                    await fetch(`/favorites?id=${fav.id}`, { method: "DELETE" });
-                    loadFavorites();
-                });
-                favoritesList.appendChild(div);
-            });
-        } catch (err) {
-            favoritesList.innerHTML = "<p>Нет сохраненных постов</p>";
-        }
-    }
-
-    // Генерация изображения
+    // Generate image
     genImageBtn.addEventListener("click", async () => {
         if (!currentPost) return;
         genImageBtn.disabled = true;
@@ -201,6 +168,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
+    // Clear favorites
     clearFavBtn.addEventListener("click", async () => {
         if (confirm("Очистить все избранное?")) {
             await fetch("/favorites", { method: "DELETE" });
@@ -208,6 +176,39 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Загружаем избранное при старте
+    // Load favorites
+    async function loadFavorites() {
+        try {
+            const response = await fetch("/favorites");
+            const favorites = await response.json();
+            favoritesList.innerHTML = "";
+            favorites.forEach(fav => {
+                const div = document.createElement("div");
+                div.className = "fav-item";
+                div.innerHTML = `
+                    <div class="fav-item-text">${fav.text}</div>
+                    <div class="fav-item-meta">Сохранено: ${fav.saved_at || "—"}</div>
+                    <div class="fav-item-actions">
+                        <button class="btn-copy-fav">Копировать</button>
+                        <button class="btn-delete">Удалить</button>
+                    </div>
+                `;
+                div.querySelector(".btn-copy-fav").addEventListener("click", () => {
+                    const fullText = fav.text + "\n\n" + fav.hashtags.join(" ");
+                    navigator.clipboard.writeText(fullText);
+                    alert("Скопировано!");
+                });
+                div.querySelector(".btn-delete").addEventListener("click", async () => {
+                    await fetch(`/favorites?id=${fav.id}`, { method: "DELETE" });
+                    loadFavorites();
+                });
+                favoritesList.appendChild(div);
+            });
+        } catch (err) {
+            favoritesList.innerHTML = "<p>Нет сохраненных постов</p>";
+        }
+    }
+
+    // Load on start
     loadFavorites();
 });
