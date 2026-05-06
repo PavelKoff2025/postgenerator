@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PostGen — Генератор постов</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>PostGen</h1>
+        <p class="subtitle">Вставьте ссылку на лонгрид — получите готовый пост</p>
+
+        <form id="urlForm">
+            <div class="input-group">
+                <svg class="link-icon" viewBox="0 0 24 24" width="20" height="20">
+                    <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/>
+                </svg>
+                <input type="url" id="urlInput" placeholder="https://example.com/article" required>
+            </div>
+            <button type="submit" id="generateBtn" class="btn-primary">
+                <span id="btnText">Сгенерировать пост</span>
+                <span id="btnLoader" class="hidden">Генерация...</span>
+            </button>
+        </form>
+
+        <div id="errorBlock" class="error-block hidden"></div>
+
+        <div id="resultBlock" class="result-block hidden">
+            <h2>Результат</h2>
+            <div class="post-text" id="postText"></div>
+            <div class="hashtags" id="hashtags"></div>
+            <button id="copyBtn" class="btn-secondary">Копировать</button>
+            <span id="copyConfirm" class="copy-confirm hidden">Скопировано!</span>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
