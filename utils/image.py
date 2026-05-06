@@ -3,43 +3,31 @@ import time
 import requests
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
+import base64
+import io
 
 def generate_image(prompt: str) -> str:
-    """Generate image using DeepSeek API or fallback to PIL"""
-    # Try DeepSeek API first
-    api_key = os.getenv("DEEPSEEK_API_KEY")
-    api_url = os.getenv("DEEPSEEK_API_URL")
+    """Generate image using Hugging Face Inference API or fallback to PIL"""
+    # Try Hugging Face API (free tier)
+    hf_token = os.getenv("HUGGINGFACE_TOKEN")
     
-    if api_key and api_url:
+    if hf_token:
         try:
-            headers = {
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
-            }
-            payload = {
-                "prompt": prompt[:500],
-                "n": 1,
-                "size": "1024x1024"
-            }
-            resp = requests.post(api_url, json=payload, headers=headers, timeout=60)
-            resp.raise_for_status()
-            data = resp.json()
+            # Use a popular image generation model on Hugging Face
+            api_url = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
+            headers = {"Authorization": f"Bearer {hf_token}"}
             
-            # Extract image URL (adjust based on actual DeepSeek response format)
-            image_url = None
-            if "data" in data and len(data["data"]) > 0:
-                image_url = data["data"][0].get("url") or data["data"][0].get("b64_json")
+            # Hugging Face expects different format
+            response = requests.post(
+                api_url,
+                headers=headers,
+                json={"inputs": prompt[:200]},
+                timeout=60
+            )
             
-            if image_url:
-                # Download image
-                if image_url.startswith("http"):
-                    img_resp = requests.get(image_url, timeout=30)
-                    img_resp.raise_for_status()
-                    img_data = img_resp.content
-                else:
-                    # Base64 encoded image
-                    import base64
-                    img_data = base64.b64decode(image_url)
+            if response.status_code == 200:
+                # Response is the image bytes directly
+                img_data = response.content
                 
                 # Save image
                 temp_dir = os.path.join(os.path.dirname(__file__), "..", "static", "generated")
@@ -51,9 +39,10 @@ def generate_image(prompt: str) -> str:
                     f.write(img_data)
                 
                 return f"/static/generated/image_{timestamp}.jpg"
+            else:
+                print(f"Hugging Face API error: {response.status_code} - {response.text}")
         except Exception as e:
-            print(f"DeepSeek API error: {e}")
-            # Fall through to PIL fallback
+            print(f"Hugging Face error: {e}")
     
     # Fallback: Generate simple PIL image with text
     try:
@@ -85,5 +74,5 @@ def generate_image(prompt: str) -> str:
         
         return f"/static/generated/image_{timestamp}.jpg"
     except Exception as e:
-        print(f"PIL image generation error: {e}")
+        print(f"PIL error: {e}")
         return ""
