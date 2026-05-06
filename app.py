@@ -15,10 +15,13 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', os.urandom(32).hex())
 csrf = CSRFProtect(app)
 
+# Disable CSRF for API routes
+@csrf.exempt
 @app.route("/")
 def index():
     return render_template("index.html")
 
+@csrf.exempt
 @app.route("/generate", methods=["POST"])
 def generate():
     data = request.get_json(silent=True)
@@ -45,6 +48,7 @@ def generate():
     except Exception as e:
         return jsonify({"status": "error", "message": f"Ошибка генерации: {str(e)}"}), 500
 
+@csrf.exempt
 @app.route("/publish-vk", methods=["POST"])
 def publish_vk():
     data = request.get_json(silent=True)
@@ -61,6 +65,7 @@ def publish_vk():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@csrf.exempt
 @app.route("/favorites", methods=["GET", "POST", "DELETE"])
 def favorites():
     if request.method == "GET":
@@ -81,6 +86,7 @@ def favorites():
             clear_favorites()
         return jsonify({"status": "ok"})
 
+@csrf.exempt
 @app.route("/generate-image", methods=["POST"])
 def generate_image_route():
     data = request.get_json(silent=True)
